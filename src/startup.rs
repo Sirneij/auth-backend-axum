@@ -42,19 +42,17 @@ async fn run(
     store: crate::store::Store,
     _settings: crate::settings::Settings,
 ) {
-    // let redis_url = std::env::var("REDIS_URL").expect("Failed to get REDIS_URL.");
-
-    // Redis connection pool
-    // let cfg = deadpool_redis::Config::from_url(redis_url.clone());
-    // let redis_pool = cfg
-    //     .create_pool(Some(deadpool_redis::Runtime::Tokio1))
-    //     .expect("Cannot create deadpool redis.");
-
+    let redis_url = std::env::var("REDIS_URL").expect("Failed to get REDIS_URL.");
+    let cfg = deadpool_redis::Config::from_url(redis_url.clone());
+    let redis_pool = cfg
+        .create_pool(Some(deadpool_redis::Runtime::Tokio1))
+        .expect("Cannot create deadpool redis.");
     // build our application with a route
     let app = axum::Router::new()
-        // `GET /` goes to `root`
         .route("/", axum::routing::get(root))
-        .with_state(store);
+        .with_state(store)
+        .layer(axum::Extension(redis_pool))
+        .layer(tower_http::trace::TraceLayer::new_for_http());
 
     axum::Server::from_tcp(listener)
         .unwrap()
@@ -63,6 +61,7 @@ async fn run(
         .unwrap();
 }
 // basic handler that responds with a static string
+#[tracing::instrument]
 async fn root() -> &'static str {
     "Hello, World!"
 }

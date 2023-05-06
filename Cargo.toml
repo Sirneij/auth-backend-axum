@@ -14,6 +14,7 @@ name = "backend_axum"
 [dependencies]
 # Axum specific
 axum = { version = "0.6", features = ["tracing", "multipart", "macros"] }
+tower-http = { version = "0.4", features = ["limit", "trace"] }
 # Tokio runtime
 tokio = { version = "1", features = ["full"] }
 # Tracing
